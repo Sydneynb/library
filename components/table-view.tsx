@@ -1,10 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { BookPlusIcon, CheckCircle, Edit, Loader2, PlayIcon, Trash2Icon } from "lucide-react";
+import { useEffect, useState, useMemo } from "react";
+import {
+  BookPlusIcon,
+  CheckCircle,
+  Edit,
+  Loader2,
+  PlayIcon,
+  Trash2Icon,
+  Sparkles,
+} from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import AIRecommendations from "@/components/ai-recommendations";
+import { useToast } from "@/components/ui/toast/toast";
 import {
   Table,
   TableBody,
@@ -36,7 +46,6 @@ import {
   SheetHeader,
   SheetTitle,
   SheetDescription,
-  SheetFooter,
   SheetClose,
 } from "@/components/ui/sheet";
 import { Label } from "@/components/ui/label";
@@ -74,9 +83,10 @@ type Book = {
 
 type Props = {
   refreshSignal?: number;
+  search?: string;
 };
 
-export default function TableView({ refreshSignal }: Props) {
+export default function TableView({ refreshSignal, search }: Props) {
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -84,7 +94,9 @@ export default function TableView({ refreshSignal }: Props) {
     null,
   );
   const [editing, setEditing] = useState<Book | null>(null);
+  const [recBookId, setRecBookId] = useState<string | null>(null);
   const supabase = createClient();
+  const { notify } = useToast();
 
   const fetchBooks = async () => {
     setLoading(true);
@@ -111,7 +123,23 @@ export default function TableView({ refreshSignal }: Props) {
 
   useEffect(() => {
     fetchBooks();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshSignal]);
+
+  const filteredBooks =
+    search && search.trim()
+      ? books.filter((b) => {
+          const q = search.trim().toLowerCase();
+          return (
+            (b.title ?? "").toLowerCase().includes(q) ||
+            (b.assignee ?? "").toLowerCase().includes(q) ||
+            ((b.book_type ?? b.bookType ?? "") as string)
+              .toLowerCase()
+              .includes(q) ||
+            (b.notes ?? "").toLowerCase().includes(q)
+          );
+        })
+      : books;
 
   const setPendingAction = (id: string, action: string) => {
     setPending({ id, action });
@@ -132,6 +160,18 @@ export default function TableView({ refreshSignal }: Props) {
         .eq("id", book.id);
       if (updateError) throw updateError;
       await fetchBooks();
+
+      // Show toast notification on success (include variant for colored background)
+      try {
+        notify({
+          title: next === "checked-in" ? "Checked In" : "Checked Out",
+          description: `${book.title} has been ${next === "checked-in" ? "checked in" : "checked out"}.`,
+          duration: 4000,
+          variant: next === "checked-in" ? "checked-in" : "checked-out",
+        });
+      } catch {
+        // ignore toast errors
+      }
     } catch (err: any) {
       setError(err?.message ?? String(err));
     } finally {
@@ -256,6 +296,23 @@ export default function TableView({ refreshSignal }: Props) {
                   <TooltipContent>Check In</TooltipContent>
                 </Tooltip>
               )}
+
+              {/* AI recommendations trigger: opens a sheet for the selected book */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setRecBookId(book.id)}
+                    disabled={busy}
+                  >
+                    <Sparkles className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Get Recommendations</TooltipContent>
+              </Tooltip>
+
               <Sheet>
                 <SheetTrigger asChild>
                   <Button
@@ -269,19 +326,27 @@ export default function TableView({ refreshSignal }: Props) {
                   </Button>
                 </SheetTrigger>
                 <SheetContent>
-                  <SheetHeader>
-                    <SheetTitle>Edit Book</SheetTitle>
-                    <SheetDescription>
-                      Edit "{book.title}" details below.
-                    </SheetDescription>
-                  </SheetHeader>
-                  <EditForm
-                    book={book}
-                    onSave={(patch) => saveEdit(book.id, patch)}
-                    onCancel={() => setEditing(null)}
-                  />
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="md:col-span-2">
+                      <SheetHeader>
+                        <SheetTitle>Edit Book</SheetTitle>
+                        <SheetDescription>
+                          Edit "{book.title}" details below.
+                        </SheetDescription>
+                      </SheetHeader>
+                      <EditForm
+                        book={book}
+                        onSave={(patch) => saveEdit(book.id, patch)}
+                        onCancel={() => setEditing(null)}
+                      />
+                    </div>
+                    <div className="md:col-span-1">
+                      <AIRecommendations bookId={book.id} topK={5} />
+                    </div>
+                  </div>
                 </SheetContent>
               </Sheet>
+
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button
@@ -320,58 +385,83 @@ export default function TableView({ refreshSignal }: Props) {
   };
 
   return (
-    <div className="rounded-lg border bg-card max-w-[calc(100vw-16rem-40px)] w-[calc(100vw-16rem-40px)]">
-      <Table>
-        <TableHeader>
-          <TableRow className="hover:bg-transparent border-b">
-            <TableHead className="h-12 px-4 font-medium">Title</TableHead>
-            <TableHead className="h-12 px-4 font-medium">Assignee</TableHead>
-            <TableHead className="h-12 px-4 font-medium">Book Type</TableHead>
-            <TableHead className="h-12 px-4 font-medium w-[120px]">
-              Status
-            </TableHead>
-            <TableHead className="h-12 px-4 font-medium">Due Date</TableHead>
-            <TableHead className="h-12 px-4 font-medium">Notes</TableHead>
-            <TableHead className="h-12 px-4 font-medium text-end w-[180px]">
-              Actions
-            </TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {loading ? (
-            <TableRow>
-              <TableCell colSpan={7} className="p-4">
-                Loading...
-              </TableCell>
+    <div>
+      <div className="rounded-lg border bg-card max-w-[calc(100vw-16rem-40px)] w-[calc(100vw-16rem-40px)]">
+        <Table>
+          <TableHeader>
+            <TableRow className="hover:bg-transparent border-b">
+              <TableHead className="h-12 px-4 font-medium">Title</TableHead>
+              <TableHead className="h-12 px-4 font-medium">Assignee</TableHead>
+              <TableHead className="h-12 px-4 font-medium">Book Type</TableHead>
+              <TableHead className="h-12 px-4 font-medium w-[120px]">
+                Status
+              </TableHead>
+              <TableHead className="h-12 px-4 font-medium">Due Date</TableHead>
+              <TableHead className="h-12 px-4 font-medium">Notes</TableHead>
+              <TableHead className="h-12 px-4 font-medium text-end w-[180px]">
+                Actions
+              </TableHead>
             </TableRow>
-          ) : error ? (
-            <TableRow>
-              <TableCell colSpan={7} className="p-4 text-destructive">
-                {error}
-              </TableCell>
-            </TableRow>
-          ) : books.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={7} className="p-4">
-                <Empty>
-                  <EmptyHeader>
-                    <EmptyMedia variant="icon">
-                      <BookPlusIcon />
-                    </EmptyMedia>
-                    <EmptyTitle>No Books Yet</EmptyTitle>
-                    <EmptyDescription>
-                      You haven&apos;t created any books yet. Get started by
-                      creating your first book.
-                    </EmptyDescription>
-                  </EmptyHeader>
-                </Empty>
-              </TableCell>
-            </TableRow>
-          ) : (
-            books.map(renderRow)
-          )}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={7} className="p-4">
+                  Loading...
+                </TableCell>
+              </TableRow>
+            ) : error ? (
+              <TableRow>
+                <TableCell colSpan={7} className="p-4 text-destructive">
+                  {error}
+                </TableCell>
+              </TableRow>
+            ) : filteredBooks.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={7} className="p-4">
+                  <Empty>
+                    <EmptyHeader>
+                      <EmptyMedia variant="icon">
+                        <BookPlusIcon />
+                      </EmptyMedia>
+                      <EmptyTitle>No Books Found</EmptyTitle>
+                      <EmptyDescription>
+                        No books match your search. Try a different query or add
+                        a new book.
+                      </EmptyDescription>
+                    </EmptyHeader>
+                  </Empty>
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredBooks.map(renderRow)
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* AI Recommendations sheet shown when a row's recommendations button is clicked */}
+      <Sheet
+        open={!!recBookId}
+        onOpenChange={(open) => {
+          if (!open) setRecBookId(null);
+        }}
+      >
+        <SheetContent>
+          <SheetHeader>
+            <SheetTitle>AI Recommendations</SheetTitle>
+            <SheetDescription>
+              Suggestions based on the selected book
+            </SheetDescription>
+          </SheetHeader>
+          <div className="p-4">
+            {recBookId && <AIRecommendations bookId={recBookId} topK={5} />}
+          </div>
+          <SheetClose asChild>
+            <Button variant="outline">Close</Button>
+          </SheetClose>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

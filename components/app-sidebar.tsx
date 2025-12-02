@@ -10,34 +10,28 @@ import {
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
-import {
-  Book,
-  Home,
-} from "lucide-react";
+import { Book, Home, Search } from "lucide-react";
 import { Logo } from "./logo";
 import type { Route } from "./nav-main";
 import DashboardNavigation from "./nav-main";
 import { TeamSwitcher } from "./team-switcher";
-
 
 const dashboardRoutes: Route[] = [
   {
     id: "overview",
     title: "Overview",
     icon: <Home className="size-4" />,
-    link: "/",
+    link: "/dashboard",
   },
   {
     id: "books",
     title: "Books",
     icon: <Book className="size-4" />,
-    link: "/books",
-  }
+    link: "/dashboard/books",
+  },
 ];
 
-const teams = [
-  { id: "1", name: "Alpha Inc.", logo: Logo },
-];
+const teams = [{ id: "1", name: "Alpha Inc.", logo: Logo }];
 
 export function DashboardSidebar() {
   const { state } = useSidebar();
@@ -50,7 +44,7 @@ export function DashboardSidebar() {
           "flex md:pt-3.5",
           isCollapsed
             ? "flex-row items-center justify-between gap-y-4 md:flex-col md:items-start md:justify-start"
-            : "flex-row items-center justify-between"
+            : "flex-row items-center justify-between",
         )}
       >
         <a href="#" className="flex items-center gap-2">
@@ -66,7 +60,7 @@ export function DashboardSidebar() {
           key={isCollapsed ? "header-collapsed" : "header-expanded"}
           className={cn(
             "flex items-center gap-2",
-            isCollapsed ? "flex-row md:flex-col-reverse" : "flex-row"
+            isCollapsed ? "flex-row md:flex-col-reverse" : "flex-row",
           )}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -75,6 +69,7 @@ export function DashboardSidebar() {
           <SidebarTrigger />
         </motion.div>
       </SidebarHeader>
+
       <SidebarContent className="gap-4 px-2 py-4">
         <DashboardNavigation routes={dashboardRoutes} />
       </SidebarContent>

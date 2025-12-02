@@ -1,9 +1,25 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import AddNew from "@/components/add-new";
 import TableView from "@/components/table-view";
+import AIRecommendations from "@/components/ai-recommendations";
 import { createClient } from "@/lib/supabase/client";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
+import { Search } from "lucide-react";
+import {
+  Sheet,
+  SheetTrigger,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
 
 type Book = {
   id: string;
@@ -23,6 +39,7 @@ export default function BooksManager() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refreshSignal, setRefreshSignal] = useState(0);
+  const [search, setSearch] = useState("");
 
   const supabase = createClient();
 
@@ -38,7 +55,7 @@ export default function BooksManager() {
         setError(fetchError.message || "Failed to fetch books");
         setBooks([]);
       } else {
-        setBooks(data ?? []);
+        setBooks((data as Book[] | null) ?? []);
       }
     } catch (err: any) {
       setError(err?.message ?? String(err));
@@ -94,13 +111,27 @@ export default function BooksManager() {
     }
   };
 
-  const handleToggleStatus = async (
-    id: string,
-    current: string | undefined,
-  ) => {
+  const handleToggleStatus = async (id: string, current?: string) => {
     const nextStatus = current === "checked-in" ? "checked-out" : "checked-in";
     await handleUpdate(id, { status: nextStatus });
   };
+
+  const filteredCount = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return books.length;
+    return books.filter((b) => {
+      const title = (b.title ?? "").toLowerCase();
+      const assignee = (b.assignee ?? "").toLowerCase();
+      const type = (b.book_type ?? b.bookType ?? "").toLowerCase();
+      const notes = (b.notes ?? "").toLowerCase();
+      return (
+        title.includes(q) ||
+        assignee.includes(q) ||
+        type.includes(q) ||
+        notes.includes(q)
+      );
+    }).length;
+  }, [books, search]);
 
   return (
     <div className="w-full h-full">
@@ -113,17 +144,53 @@ export default function BooksManager() {
               : `${books.length} book${books.length === 1 ? "" : "s"}`}
           </div>
         </div>
-        <AddNew onCreated={triggerRefresh} />
+
+        <div className="flex items-center gap-3">
+          <Sheet>
+            <SheetContent>
+              <SheetHeader>
+                <SheetTitle>AI Recommendations</SheetTitle>
+                <SheetDescription>
+                  Suggestions based on your saved books
+                </SheetDescription>
+              </SheetHeader>
+              <div className="p-4">
+                <AIRecommendations bookId={books[0]?.id ?? ""} topK={5} />
+              </div>
+            </SheetContent>
+          </Sheet>
+
+          <AddNew onCreated={triggerRefresh} />
+        </div>
       </div>
 
       <div className="mb-4">
         {error && <div className="text-sm text-destructive">{error}</div>}
       </div>
 
+      <InputGroup className="mb-3">
+        <InputGroupInput
+          placeholder="Search..."
+          value={search}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setSearch(e.target.value)
+          }
+        />
+        <InputGroupAddon>
+          <Search />
+        </InputGroupAddon>
+        <InputGroupAddon align="inline-end">
+          {filteredCount} results
+        </InputGroupAddon>
+      </InputGroup>
+
       <div>
+        {/* Pass the search prop to TableView so the table can filter server- or client-side */}
+        {/* @ts-ignore - TableView's props may not include `search` in its current type; runtime passing is intended */}
         <TableView
-          // force remount when data changes so the existing TableView UI refreshes
           key={refreshSignal}
+          refreshSignal={refreshSignal}
+          search={search}
         />
       </div>
     </div>

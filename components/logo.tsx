@@ -1,5 +1,9 @@
 import { SVGProps } from "react";
 
+/**
+ * Export both `Logo` and `LogoIcon` (named exports) and provide a default export.
+ * Some files import `LogoIcon` while others may import `Logo`. This keeps both working.
+ */
 export const Logo = (props: SVGProps<SVGSVGElement>) => (
   <svg
     fill="currentColor"
@@ -21,3 +25,7 @@ export const Logo = (props: SVGProps<SVGSVGElement>) => (
     </g>
   </svg>
 );
+
+export const LogoIcon = (props: SVGProps<SVGSVGElement>) => <Logo {...props} />;
+
+export default Logo;
