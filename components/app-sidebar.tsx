@@ -7,14 +7,25 @@ import {
   SidebarHeader,
   SidebarTrigger,
   useSidebar,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { Book, Home, Search } from "lucide-react";
+import { Book, Home, Search, User, ChevronsUpDown } from "lucide-react";
 import { Logo } from "./logo";
 import type { Route } from "./nav-main";
 import DashboardNavigation from "./nav-main";
-import { TeamSwitcher } from "./team-switcher";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import { LogoutButton } from "./logout";
 
 const dashboardRoutes: Route[] = [
   {
@@ -33,8 +44,9 @@ const dashboardRoutes: Route[] = [
 
 const teams = [{ id: "1", name: "Alpha Inc.", logo: Logo }];
 
-export function DashboardSidebar() {
-  const { state } = useSidebar();
+export default function DashboardSidebar({data}: { data: any }) {
+  
+  const { state, isMobile } = useSidebar();
   const isCollapsed = state === "collapsed";
 
   return (
@@ -74,7 +86,44 @@ export function DashboardSidebar() {
         <DashboardNavigation routes={dashboardRoutes} />
       </SidebarContent>
       <SidebarFooter className="px-2">
-        <TeamSwitcher teams={teams} />
+        <div className="flex justify-start">
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <SidebarMenuButton
+                    size="lg"
+                    className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                  >
+                    <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-background text-foreground">
+                      <User className="size-4" />
+                    </div>
+                    <div className="grid flex-1 text-left text-sm leading-tight">
+                      <span className="truncate font-semibold">{data?.claims?.email}</span>
+                    </div>
+                    <ChevronsUpDown className="ml-auto" />
+                  </SidebarMenuButton>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg mb-4"
+                  align="start"
+                  side={isMobile ? "bottom" : "right"}
+                  sideOffset={4}
+                >
+                  <DropdownMenuLabel className="text-xs text-muted-foreground">
+                    {data?.user?.email}
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem>
+                    <LogoutButton>
+                      <span className="w-full block">Sign out</span>
+                    </LogoutButton>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </div>
       </SidebarFooter>
     </Sidebar>
   );

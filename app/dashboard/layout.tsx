@@ -14,5 +14,5 @@ export default async function DashboardLayout({
     redirect("/auth/login");
   }
 
-  return <LayoutShell>{children}</LayoutShell>;
+  return <LayoutShell data={data?.claims}>{children}</LayoutShell>;
 }
