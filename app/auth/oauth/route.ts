@@ -18,14 +18,39 @@ export async function GET(request: Request) {
     if (!error) {
       const forwardedHost = request.headers.get("x-forwarded-host"); // original origin before load balancer
       const isLocalEnv = process.env.NODE_ENV === "development";
+
+      // Prefer an explicit site URL configured in env for production deployments.
+      // This avoids redirects pointing at `origin` (which may be localhost when behind proxies).
+      const configuredSite =
+        process.env.NEXT_PUBLIC_SITE_URL ||
+        process.env.SITE_URL ||
+        process.env.VERCEL_URL ||
+        undefined;
+
       if (isLocalEnv) {
-        // we can be sure that there is no load balancer in between, so no need to watch for X-Forwarded-Host
-        return NextResponse.redirect(`${origin}${next}`);
-      } else if (forwardedHost) {
-        return NextResponse.redirect(`https://${forwardedHost}${next}`);
-      } else {
+        // In development keep using the request origin so localhost flows still work
         return NextResponse.redirect(`${origin}${next}`);
       }
+
+      if (configuredSite) {
+        // Normalize configuredSite to include protocol and remove trailing slash
+        let base = String(configuredSite).trim();
+        if (!/^https?:\/\//i.test(base)) {
+          // assume https for non-local hosts
+          base = base.startsWith("localhost")
+            ? `http://${base}`
+            : `https://${base}`;
+        }
+        base = base.replace(/\/$/, "");
+        return NextResponse.redirect(`${base}${next}`);
+      }
+
+      // Fallback to forwarded host (commonly set by proxies) and finally origin
+      if (forwardedHost) {
+        return NextResponse.redirect(`https://${forwardedHost}${next}`);
+      }
+
+      return NextResponse.redirect(`${origin}${next}`);
     }
   }
 
