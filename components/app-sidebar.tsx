@@ -97,7 +97,13 @@ export default function DashboardSidebar({ data }: { data: any }) {
         )}
       >
         <a href="/" className="flex items-center gap-2">
-          <Image src={"/mcgill_logo.png"} alt="logo" width={656} height={880} className="h-8 w-fit" />
+          <img
+            src="/mcgill-logo.png"
+            alt="McGill logo"
+            className="h-8 w-fit"
+            width={656}
+            height={880}
+          />
           {!isCollapsed && (
             <span className="font-semibold text-black dark:text-white">
               McGill Library
