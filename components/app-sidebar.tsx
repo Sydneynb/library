@@ -27,6 +27,47 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { LogoutButton } from "./logout";
 
+/**
+ * Helper to normalize various shapes that `data` can have so the UI always
+ * renders the user's email when available.
+ *
+ * Possible shapes observed across the app:
+ * - claims object (passed from server as `data?.claims`) -> { email?: string }
+ * - supabase session-like object -> { user?: { email?: string, user_metadata?: { email?: string } } }
+ * - top-level email property -> { email?: string }
+ *
+ * This function checks known locations in a predictable order and returns the
+ * first string it finds (or undefined).
+ */
+function getEmailFromData(data: any): string | undefined {
+  if (!data) return undefined;
+
+  // Direct email on the object (e.g., claims)
+  if (typeof data.email === "string" && data.email.length > 0) {
+    return data.email;
+  }
+
+  // Supabase-like user shape: data.user.email
+  if (typeof data.user?.email === "string" && data.user.email.length > 0) {
+    return data.user.email;
+  }
+
+  // Some shapes might nest claims under `claims`
+  if (typeof data.claims?.email === "string" && data.claims.email.length > 0) {
+    return data.claims.email;
+  }
+
+  // Some Supabase user metadata may contain an email
+  if (
+    typeof data.user?.user_metadata?.email === "string" &&
+    data.user.user_metadata.email.length > 0
+  ) {
+    return data.user.user_metadata.email;
+  }
+
+  return undefined;
+}
+
 const dashboardRoutes: Route[] = [
   {
     id: "overview",
@@ -44,10 +85,12 @@ const dashboardRoutes: Route[] = [
 
 const teams = [{ id: "1", name: "Alpha Inc.", logo: Logo }];
 
-export default function DashboardSidebar({data}: { data: any }) {
-  
+export default function DashboardSidebar({ data }: { data: any }) {
   const { state, isMobile } = useSidebar();
   const isCollapsed = state === "collapsed";
+
+  // Normalize email once so the template below is simple and resilient
+  const email = getEmailFromData(data);
 
   return (
     <Sidebar variant="inset" collapsible="icon">
@@ -99,7 +142,9 @@ export default function DashboardSidebar({data}: { data: any }) {
                       <User className="size-4" />
                     </div>
                     <div className="grid flex-1 text-left text-sm leading-tight">
-                      <span className="truncate font-semibold">{data?.claims?.email}</span>
+                      <span className="truncate font-semibold">
+                        {email ?? "Account"}
+                      </span>
                     </div>
                     <ChevronsUpDown className="ml-auto" />
                   </SidebarMenuButton>
@@ -111,14 +156,14 @@ export default function DashboardSidebar({data}: { data: any }) {
                   sideOffset={4}
                 >
                   <DropdownMenuLabel className="text-xs text-muted-foreground">
-                    {data?.user?.email}
+                    {email ?? "No email available"}
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem>
-                    <LogoutButton>
+                  <LogoutButton>
+                    <DropdownMenuItem>
                       <span className="w-full block">Sign out</span>
-                    </LogoutButton>
-                  </DropdownMenuItem>
+                    </DropdownMenuItem>
+                  </LogoutButton>
                 </DropdownMenuContent>
               </DropdownMenu>
             </SidebarMenuItem>
