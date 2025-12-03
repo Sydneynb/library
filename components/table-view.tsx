@@ -3,10 +3,10 @@
 import { useEffect, useState, useMemo } from "react";
 import {
   BookPlusIcon,
-  CheckCircle,
   Edit,
   Loader2,
-  PlayIcon,
+  LogIn,
+  LogOut,
   Trash2Icon,
   Sparkles,
 } from "lucide-react";
@@ -243,7 +243,7 @@ export default function TableView({ refreshSignal, search }: Props) {
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <span className="block cursor-help truncate">
+                <span className="block cursor-help truncate cursor-pointer">
                   {book.notes ?? ""}
                 </span>
               </TooltipTrigger>
@@ -262,14 +262,16 @@ export default function TableView({ refreshSignal, search }: Props) {
                     <Button
                       variant="outline"
                       size="icon"
-                      className="h-8 w-8"
+                      /* Button and icon reflect the CHECKED-IN status color (green) */
+                      className="h-8 w-8 text-green-700 border-green-200 hover:bg-green-50 cursor-pointer"
                       onClick={() => toggleStatus(book)}
                       disabled={busy}
                     >
                       {isPending(id, "toggle") ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <Loader2 className="h-4 w-4 animate-spin text-green-700" />
                       ) : (
-                        <PlayIcon className="h-4 w-4" />
+                        /* icon colored to match checked-in badge */
+                        <LogOut className="h-4 w-4 text-green-700" />
                       )}
                     </Button>
                   </TooltipTrigger>
@@ -282,14 +284,16 @@ export default function TableView({ refreshSignal, search }: Props) {
                     <Button
                       variant="outline"
                       size="icon"
-                      className="h-8 w-8"
+                      /* Button and icon reflect the CHECKED-OUT status color (amber) */
+                      className="h-8 w-8 text-amber-700 border-amber-200 hover:bg-amber-50 cursor-pointer"
                       onClick={() => toggleStatus(book)}
                       disabled={busy}
                     >
                       {isPending(id, "toggle") ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <Loader2 className="h-4 w-4 animate-spin text-amber-700" />
                       ) : (
-                        <CheckCircle className="h-4 w-4" />
+                        /* icon colored to match checked-out badge */
+                        <LogIn className="h-4 w-4 text-amber-700" />
                       )}
                     </Button>
                   </TooltipTrigger>
@@ -303,7 +307,7 @@ export default function TableView({ refreshSignal, search }: Props) {
                   <Button
                     variant="outline"
                     size="icon"
-                    className="h-8 w-8"
+                    className="h-8 w-8 cursor-pointer"
                     onClick={() => setRecBookId(book.id)}
                     disabled={busy}
                   >

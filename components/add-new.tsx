@@ -96,7 +96,7 @@ export default function AddNew({ children, onCreated }: Props) {
   return (
     <Sheet>
       <SheetTrigger asChild>
-        {children ?? <Button>Add new</Button>}
+        {children ?? <Button className="cursor-pointer">Add new</Button>}
       </SheetTrigger>
       <SheetContent>
         <SheetHeader>
@@ -162,7 +162,10 @@ export default function AddNew({ children, onCreated }: Props) {
 
           <div className="grid gap-3">
             <Label>Status</Label>
-            <Select value={status} onValueChange={(v: any) => setStatus(v as any)}>
+            <Select
+              value={status}
+              onValueChange={(v: any) => setStatus(v as any)}
+            >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>

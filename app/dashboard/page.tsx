@@ -1,4 +1,4 @@
-import Stats from "@/components/stats";
+import BooksManager from "@/components/books-manager";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -7,9 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function Home() {
-  return (
-    <div className="w-full h-full flex flex-col gap-4">
-      <Stats />
-    </div>
-  );
+  return <BooksManager />;
 }

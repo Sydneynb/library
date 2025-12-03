@@ -62,7 +62,7 @@ export default function DashboardNavigation({ routes }: { routes: Route[] }) {
                       isOpen
                         ? "bg-sidebar-muted text-foreground"
                         : "text-muted-foreground hover:bg-sidebar-muted hover:text-foreground",
-                      isCollapsed && "justify-center"
+                      isCollapsed && "justify-center", pathname === route.link ? "bg-sidebar-muted text-foreground" : ""
                     )}
                   >
                     {route.icon}

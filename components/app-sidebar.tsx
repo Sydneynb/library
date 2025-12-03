@@ -26,6 +26,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { LogoutButton } from "./logout";
+import Image from "next/image";
 
 /**
  * Helper to normalize various shapes that `data` can have so the UI always
@@ -70,19 +71,12 @@ function getEmailFromData(data: any): string | undefined {
 
 const dashboardRoutes: Route[] = [
   {
-    id: "overview",
+    id: "books",
     title: "Overview",
-    icon: <Home className="size-4" />,
+    icon: <Book className="size-4" />,
     link: "/dashboard",
   },
-  {
-    id: "books",
-    title: "Books",
-    icon: <Book className="size-4" />,
-    link: "/dashboard/books",
-  },
 ];
-
 const teams = [{ id: "1", name: "Alpha Inc.", logo: Logo }];
 
 export default function DashboardSidebar({ data }: { data: any }) {
@@ -102,11 +96,11 @@ export default function DashboardSidebar({ data }: { data: any }) {
             : "flex-row items-center justify-between",
         )}
       >
-        <a href="#" className="flex items-center gap-2">
-          <Logo className="h-8 w-8" />
+        <a href="/" className="flex items-center gap-2">
+          <Image src={"/mcgill_logo.png"} alt="logo" width={656} height={880} className="h-8 w-fit" />
           {!isCollapsed && (
             <span className="font-semibold text-black dark:text-white">
-              Acme
+              McGill Library
             </span>
           )}
         </a>

@@ -20,6 +20,7 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 type Book = {
   id: string;
@@ -133,15 +134,47 @@ export default function BooksManager() {
     }).length;
   }, [books, search]);
 
+  // Counts for badges: only count explicit statuses
+  const checkedInCount = useMemo(
+    () => books.filter((b) => b.status === "checked-in").length,
+    [books],
+  );
+  const checkedOutCount = useMemo(
+    () => books.filter((b) => b.status === "checked-out").length,
+    [books],
+  );
+
   return (
     <div className="w-full h-full">
       <div className="flex justify-between items-center mb-5">
         <div>
           <h1 className="font-mono text-2xl font-medium">Books</h1>
           <div className="text-sm text-muted-foreground">
-            {loading
-              ? "Loading…"
-              : `${books.length} book${books.length === 1 ? "" : "s"}`}
+            {loading ? (
+              "Loading…"
+            ) : (
+              <div className="flex items-center gap-2">
+                <span>{`${books.length} book${books.length === 1 ? "" : "s"}`}</span>
+
+                {checkedInCount > 0 && (
+                  <Badge
+                    variant="outline"
+                    className="bg-green-500/15 text-green-700 border-0"
+                  >
+                    {checkedInCount} Checked In
+                  </Badge>
+                )}
+
+                {checkedOutCount > 0 && (
+                  <Badge
+                    variant="outline"
+                    className="bg-amber-500/15 text-amber-700 border-0"
+                  >
+                    {checkedOutCount} Checked Out
+                  </Badge>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -180,7 +213,27 @@ export default function BooksManager() {
           <Search />
         </InputGroupAddon>
         <InputGroupAddon align="inline-end">
-          {filteredCount} results
+          <div className="flex items-center gap-2">
+            <span>{filteredCount} results</span>
+
+            {checkedInCount > 0 && (
+              <Badge
+                variant="outline"
+                className="bg-green-500/15 text-green-700 border-0"
+              >
+                {checkedInCount} Checked In
+              </Badge>
+            )}
+
+            {checkedOutCount > 0 && (
+              <Badge
+                variant="outline"
+                className="bg-amber-500/15 text-amber-700 border-0"
+              >
+                {checkedOutCount} Checked Out
+              </Badge>
+            )}
+          </div>
         </InputGroupAddon>
       </InputGroup>
 

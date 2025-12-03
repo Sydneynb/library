@@ -36,19 +36,27 @@ export default function LoginShell() {
         onSubmit={handleSocialLogin}
         className="max-w-92 m-auto h-fit w-full"
       >
-        <div className="p-6">
-          <div>
-            <Link href="/" aria-label="go home"></Link>
-            <h1 className="mb-1 mt-4 text-xl font-semibold">
-              Sign In to My Books Library
+        <div className="flex flex-col justify-center items-center p-6">
+          <div className="flex flex-col justify-center items-center mb-2">
+            <Link href="/" aria-label="go home">
+              <img
+                src="/mcgill-logo.png"
+                alt="McGill logo"
+                className="h-32 w-auto object-contain"
+                width={96}
+                height={96}
+              />
+            </Link>
+            <h1 className="mt-4 text-xl font-semibold text-center mb-2">
+              Sign In to McGill Library
             </h1>
-            <p>Welcome back! Sign in to continue</p>
+            <p className="text-center mb-2">Sign in to continue</p>
           </div>
 
-          <div className="mt-6">
+          <div className="mt-6 w-full">
             <Button
               type="submit"
-              className="w-full"
+              className="w-full cursor-pointer"
               disabled={isLoading}
               variant="outline"
             >
